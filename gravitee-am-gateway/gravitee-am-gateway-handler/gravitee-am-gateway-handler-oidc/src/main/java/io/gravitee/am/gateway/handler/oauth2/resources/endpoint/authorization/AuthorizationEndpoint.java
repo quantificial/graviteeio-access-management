@@ -15,11 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization;
 
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
+import io.gravitee.am.gateway.handler.oauth2.exception.JWTOAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.response.jwt.JWTAuthorizationResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
@@ -28,6 +35,8 @@ import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Instant;
 
 /**
  * The authorization endpoint is used to interact with the resource owner and obtain an authorization grant.
@@ -46,9 +55,16 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
     private static final String USER_CONSENT_COMPLETED_CONTEXT_KEY = "userConsentCompleted";
     private static final String REQUESTED_CONSENT_CONTEXT_KEY = "requestedConsent";
     private Flow flow;
+    private JWTService jwtService;
+    private JWEService jweService;
+    private OpenIDDiscoveryService openIDDiscoveryService;
 
-    public AuthorizationEndpoint(Flow flow) {
+    public AuthorizationEndpoint(final Flow flow, final OpenIDDiscoveryService openIDDiscoveryService,
+                                 final JWTService jwtService, final JWEService jweService) {
         this.flow = flow;
+        this.openIDDiscoveryService = openIDDiscoveryService;
+        this.jwtService = jwtService;
+        this.jweService = jweService;
     }
 
     @Override
@@ -75,14 +91,51 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
                             try {
                                 // final step of the authorization flow, we can clean the session and redirect the user
                                 cleanSession(context);
-                                doRedirect(context.response(), authorizationResponse.buildRedirectUri());
+
+                                // Response Mode is not supplied by the client, process the response as usual
+                                if (request.getResponseMode() == null || !request.getResponseMode().endsWith("jwt")) {
+                                    doRedirect(context.response(), authorizationResponse.buildRedirectUri());
+                                } else {
+                                    JWTAuthorizationResponse jwtAuthorizationResponse = JWTAuthorizationResponse.from(authorizationResponse);
+                                    jwtAuthorizationResponse.setIss(openIDDiscoveryService.getIssuer(UriBuilderRequest.extractBasePath(context)));
+                                    jwtAuthorizationResponse.setAud(client.getClientId());
+
+                                    // There is nothing about expiration. We admit to use the one settled for IdToken validity
+                                    jwtAuthorizationResponse.setExp(Instant.now().plusSeconds(client.getIdTokenValiditySeconds()).getEpochSecond());
+
+                                    //Sign if needed, else return unsigned JWT
+                                    jwtService.encodeAuthorization(jwtAuthorizationResponse.build(), client)
+                                            //Encrypt if needed, else return JWT
+                                            .flatMap(userinfo -> jweService.encryptAuthorization(userinfo, client))
+                                            .subscribe(jwt -> doRedirect(context.response(),
+                                                    jwtAuthorizationResponse.buildRedirectUri(
+                                                            request.getResponseType(), request.getResponseMode(), jwt)),
+                                                    throwable -> sendException(context, request, throwable, client));
+                                }
                             } catch (Exception e) {
                                 logger.error("Unable to redirect to client redirect_uri", e);
-                                context.fail(new ServerErrorException());
+                                sendException(context, request, new ServerErrorException(), client);
                             }
                         },
-                        error -> context.fail(error));
+                        error -> sendException(context, request, error, client));
+    }
 
+    private void sendException(RoutingContext context, AuthorizationRequest request, Throwable throwable, Client client) {
+        // Response Mode is not supplied by the client, process the response as usual
+        if (request.getResponseMode() == null || !request.getResponseMode().endsWith(".jwt") || !(throwable instanceof OAuth2Exception)) {
+            context.fail(throwable);
+        } else {
+            JWTOAuth2Exception jwtException = new JWTOAuth2Exception((OAuth2Exception) throwable, request.getState());
+
+            //Sign if needed, else return unsigned JWT
+            jwtService.encodeAuthorization(jwtException.build(), client)
+                    //Encrypt if needed, else return JWT
+                    .flatMap(authorization -> jweService.encryptAuthorization(authorization, client))
+                    .subscribe(jwt -> doRedirect(context.response(),
+                            jwtException.buildRedirectUri(request.getRedirectUri(),
+                                    request.getResponseType(), request.getResponseMode(), jwt)),
+                            throwable2 -> sendException(context, request, throwable, client));
+        }
     }
 
     private void doRedirect(HttpServerResponse response, String url) {

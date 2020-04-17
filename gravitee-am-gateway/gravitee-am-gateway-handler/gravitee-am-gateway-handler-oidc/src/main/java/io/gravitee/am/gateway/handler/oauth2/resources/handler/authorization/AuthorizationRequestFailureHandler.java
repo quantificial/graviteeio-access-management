@@ -18,11 +18,15 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.oauth2.exception.JWTOAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
@@ -36,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -54,6 +59,7 @@ import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
  * See <a href="https://tools.ietf.org/html/rfc6749#section-4.2.2.1">4.2.2.1. Error Response</a>
  *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class AuthorizationRequestFailureHandler implements Handler<RoutingContext> {
@@ -65,7 +71,18 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
     private String defaultErrorPagePath;
 
-    public AuthorizationRequestFailureHandler(Domain domain) {
+    private JWTService jwtService;
+    private JWEService jweService;
+    private OpenIDDiscoveryService openIDDiscoveryService;
+    private Domain domain;
+
+    public AuthorizationRequestFailureHandler(final Domain domain,  final OpenIDDiscoveryService openIDDiscoveryService,
+                                        final JWTService jwtService, final JWEService jweService) {
+        this.domain = domain;
+        this.openIDDiscoveryService = openIDDiscoveryService;
+        this.jwtService = jwtService;
+        this.jweService = jweService;
+
         defaultErrorPagePath = "/" + domain.getPath() + "/oauth/error";
     }
 
@@ -88,8 +105,8 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                     if (oAuth2Exception instanceof RedirectMismatchException) {
                         request.setRedirectUri(defaultProxiedOAuthErrorPage);
                     }
-                    // redirect user
-                    doRedirect(routingContext.response(), buildRedirectUri(oAuth2Exception.getOAuth2ErrorCode(), oAuth2Exception.getMessage(), request));
+                    // Manage exception
+                    sendError(routingContext, request, oAuth2Exception, client);
                 } else if (throwable instanceof HttpStatusException) {
                     // in case of http status exception, go to the default error page
                     request.setRedirectUri(defaultProxiedOAuthErrorPage);
@@ -116,6 +133,36 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                 // clean session
                 cleanSession(routingContext);
             }
+        }
+    }
+
+    private void sendError(RoutingContext context, AuthorizationRequest request, OAuth2Exception oAuth2Exception, Client client) {
+        try {
+            // Response Mode is not supplied by the client, process the response as usual
+            if (client == null || request.getResponseMode() == null || !request.getResponseMode().endsWith("jwt")) {
+                // redirect user
+                doRedirect(context.response(), buildRedirectUri(oAuth2Exception.getOAuth2ErrorCode(), oAuth2Exception.getMessage(), request));
+            } else {
+                JWTOAuth2Exception jwtException = new JWTOAuth2Exception(oAuth2Exception,
+                        request.getState());
+                jwtException.setIss(openIDDiscoveryService.getIssuer(UriBuilderRequest.extractBasePath(context)));
+                jwtException.setAud(client.getClientId());
+
+                // There is nothing about expiration. We admit to use the one settled for IdToken validity
+                jwtException.setExp(Instant.now().plusSeconds(client.getIdTokenValiditySeconds()).getEpochSecond());
+
+                //Sign if needed, else return unsigned JWT
+                jwtService.encodeAuthorization(jwtException.build(), client)
+                        //Encrypt if needed, else return JWT
+                        .flatMap(authorization -> jweService.encryptAuthorization(authorization, client))
+                        .subscribe(jwt -> doRedirect(context.response(),
+                                jwtException.buildRedirectUri(request.getRedirectUri(),
+                                        request.getResponseType(), request.getResponseMode(), jwt)),
+                                throwable2 -> sendError(context, request, oAuth2Exception, client));
+            }
+        } catch (Exception e) {
+            logger.error("Unable to handle authorization error response", e);
+            doRedirect(context.response(), "/" + domain.getPath() + "/oauth/error");
         }
     }
 
