@@ -95,6 +95,7 @@
         <bouncycastle.version>1.61</bouncycastle.version>
         <wiremock.version>2.6.0</wiremock.version>
         <embedded-ldap-junit.version>0.7</embedded-ldap-junit.version>
+        <httpclient.version>4.5.12</httpclient.version>
     </properties>
 
     <dependencyManagement>
@@ -279,6 +280,11 @@
                 <groupId>org.ldaptive</groupId>
                 <artifactId>ldaptive</artifactId>
                 <version>${ldaptive.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
             </dependency>
 
             <!-- Test -->
