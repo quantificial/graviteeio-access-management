@@ -15,38 +15,33 @@
  */
 package io.gravitee.am.common.exception.oauth2;
 
-import io.gravitee.common.http.HttpStatusCode;
-
 /**
- * method_not_allowed
+ * invalid_request
  *          The request is missing a required parameter, includes an
  *          unsupported parameter or parameter value, repeats the same
  *          parameter, uses more than one method for including an access
  *          token, or is otherwise malformed.  The resource server SHOULD
  *          respond with the HTTP 400 (Bad Request) status code.
  *
- * See <a href="https://openid.net/specs/openid-financial-api-part-2.html#method-not-allowed">7.4.3. Method not allowed</a>
+ * See <a href="https://tools.ietf.org/html/rfc6750#section-3.1">3.1. Error Codes</a>
  *
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class InvalidRequestException extends OAuth2Exception {
+public class MethodNotAllowedException extends OAuth2Exception {
 
-    public InvalidRequestException() {
+    public MethodNotAllowedException() {
         super();
     }
 
-    public InvalidRequestException(String message) {
+    public MethodNotAllowedException(String message) {
         super(message);
     }
 
     @Override
     public String getOAuth2ErrorCode() {
-        return "method_not_allowed";
+        return "invalid_request";
     }
 
-    @Override
-    public int getHttpStatusCode() {
-        return HttpStatusCode.METHOD_NOT_ALLOWED_405;
-    }
 }

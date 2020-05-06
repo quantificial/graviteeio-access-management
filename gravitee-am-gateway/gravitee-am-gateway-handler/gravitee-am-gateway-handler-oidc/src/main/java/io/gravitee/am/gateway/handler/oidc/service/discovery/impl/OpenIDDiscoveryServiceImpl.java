@@ -52,6 +52,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
     private static final String ENDSESSION_ENDPOINT = "/logout";
     private static final String REGISTRATION_ENDPOINT = "/oidc/register";
     private static final String OIDC_ENDPOINT = "/oidc";
+    private static final String REQUEST_OBJECT_ENDPOINT = "/oidc/ros";
 
     @Autowired
     private Domain domain;
@@ -79,6 +80,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         if(domain.isDynamicClientRegistrationTemplateEnabled()) {
             openIDProviderMetadata.setRegistrationTemplatesEndpoint(openIDProviderMetadata.getRegistrationEndpoint()+"_templates");
         }
+        openIDProviderMetadata.setRequestObjectEndpoint(getEndpointAbsoluteURL(basePath, REQUEST_OBJECT_ENDPOINT));
 
         // supported parameters
         openIDProviderMetadata.setScopesSupported(scopeService.getDiscoveryScope());

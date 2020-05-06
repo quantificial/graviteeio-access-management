@@ -153,6 +153,9 @@ public class OpenIDProviderMetadata {
     @JsonProperty("op_tos_uri")
     private String opTosUri;
 
+    @JsonProperty("request_object_endpoint")
+    private String requestObjectEndpoint;
+
     public String getIssuer() {
         return issuer;
     }
@@ -479,5 +482,13 @@ public class OpenIDProviderMetadata {
 
     public void setOpTosUri(String opTosUri) {
         this.opTosUri = opTosUri;
+    }
+
+    public String getRequestObjectEndpoint() {
+        return requestObjectEndpoint;
+    }
+
+    public void setRequestObjectEndpoint(String requestObjectEndpoint) {
+        this.requestObjectEndpoint = requestObjectEndpoint;
     }
 }
