@@ -46,7 +46,7 @@ public class ResourceSetRegistrationAccessHandler implements Handler<RoutingCont
     @Override
     public void handle(RoutingContext context) {
         if(domain.getUma()==null || !domain.getUma().isEnabled()) {
-            LOGGER.debug("Dynamic client registration is disabled");
+            LOGGER.debug("UMA 2.0 Resource Set registration is disabled");
             context.fail(new ResourceSetRegistrationForbiddenException());
             return;
         }

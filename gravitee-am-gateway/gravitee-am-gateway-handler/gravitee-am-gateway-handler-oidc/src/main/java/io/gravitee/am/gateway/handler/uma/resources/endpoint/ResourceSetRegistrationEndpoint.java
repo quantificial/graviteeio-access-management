@@ -170,10 +170,7 @@ public class ResourceSetRegistrationEndpoint implements Handler<RoutingContext> 
     private Single<JsonObject> bodyValidation(JsonObject body) {
         try {
             //Only one field is required from the spec, others are tag as optional
-            if (body == null) {
-                throw new InvalidRequestException("missing body content");
-            }
-            if (!body.containsKey("resource_scopes")) {
+            if (body == null || !body.containsKey("resource_scopes")) {
                 throw new InvalidRequestException("missing resource_scopes");
             }
             return Single.just(body);

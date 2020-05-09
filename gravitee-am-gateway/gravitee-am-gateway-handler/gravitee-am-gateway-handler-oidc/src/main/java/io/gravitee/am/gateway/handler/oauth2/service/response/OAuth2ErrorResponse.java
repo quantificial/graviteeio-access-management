@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author GraviteeSource Team
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class  OAuth2ErrorResponse {
+public class OAuth2ErrorResponse {
 
     @JsonProperty("error")
     private final String code;

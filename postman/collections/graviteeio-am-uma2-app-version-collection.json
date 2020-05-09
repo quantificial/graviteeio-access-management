@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "f6ff2f6b-5bec-45ee-ad5d-545da7901e42",
-		"name": "Gravitee.io - AM - UMA 2.0",
+		"_postman_id": "b5363b83-f729-4e89-9e42-3524764d197f",
+		"name": "Gravitee.io - AM - UMA 2.0 - app version",
 		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -15,7 +15,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "b2a9c7e2-6cff-480b-bd16-49e29006fd8c",
+								"id": "07581ee0-f2a8-4a94-bb5d-5db71471186c",
 								"exec": [
 									"",
 									"pm.test(\"Status code is 200\", function () {",
@@ -77,7 +77,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "0de551b9-a94c-4f36-bb20-aaaf10e2b5e1",
+								"id": "b5dd28dd-4402-4d5d-b0a5-c16e45c7b1c3",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -130,7 +130,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "32d5fd30-bad9-4e21-ac0b-f52f4ec06c51",
+								"id": "0ff71785-5e05-4853-8bf9-e24164e75039",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(204);",
@@ -182,7 +182,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "ae574dad-2430-438e-b7fc-c212f13b53a1",
+								"id": "390bfaf4-08a0-4049-ac15-6f0b783b73af",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
@@ -231,24 +231,29 @@
 					"response": []
 				},
 				{
-					"name": "Create RS as client",
+					"name": "Create application",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
-								"id": "2ce4ddc3-f798-41b9-a4da-232379a2b198",
+								"id": "8a9e769d-6cce-4fcf-bdff-08a98a70b0cb",
 								"exec": [
 									"pm.test(\"Status code is 201\", function () {",
 									"    pm.response.to.have.status(201);",
 									"});",
 									"",
+									"",
 									"pm.test(\"Saving credentials\", function () {",
 									"    let body = JSON.parse(responseBody);",
-									"    let client_id = body.clientId;",
-									"    let secret = body.clientSecret;",
-									"    let rs_client_secret = btoa(client_id + \":\" + secret);",
-									"    ",
-									"    pm.environment.set('client', body.id);",
+									"",
+									"    let client_id = body.settings.oauth.clientId;",
+									"    let secret = body.settings.oauth.clientSecret;",
+									"    let rs_client_secret = btoa(client_id + \":\" + secret);  ",
+									"",
+									"    //Save fields",
+									"    pm.environment.set('app', body.id);",
+									"    pm.environment.set('clientId', client_id);",
+									"    pm.environment.set('clientSecret', secret);",
 									"    pm.environment.set('rs_client_secret', rs_client_secret);",
 									"});"
 								],
@@ -270,10 +275,10 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"clientId\": \"RS-client\",\n  \"clientSecret\": \"my-client-secret\"\n}"
+							"raw": "{\n  \"name\": \"RS-client\",\n  \"type\": \"WEB\"\n}"
 						},
 						"url": {
-							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients",
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
 							"host": [
 								"{{management_url}}"
 							],
@@ -285,19 +290,19 @@
 								"{{defaultEnvironmentId}}",
 								"domains",
 								"{{domain}}",
-								"clients"
+								"applications"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Configure RS to password",
+					"name": "Configure application",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
-								"id": "df616b39-d4ed-40ea-b27f-147bff5de9c8",
+								"id": "d10c2029-e258-40bd-8ee5-3f17062eefe3",
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -305,7 +310,7 @@
 									"",
 									"pm.test(\"Check grant\", function () {",
 									"    let body = JSON.parse(responseBody);",
-									"    pm.expect(body.authorizedGrantTypes).to.eql([\"password\"]);",
+									"    pm.expect(body.settings.oauth.grantTypes).to.eql([\"password\"]);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -313,7 +318,7 @@
 						}
 					],
 					"request": {
-						"method": "PATCH",
+						"method": "PUT",
 						"header": [
 							{
 								"key": "Content-Type",
@@ -326,10 +331,10 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"redirectUris\": [],\n  \"responseTypes\": [],\n  \"authorizedGrantTypes\": [\"password\"],\n  \"scopes\": [\"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"enabled\": true,\n  \"identities\": [\"{{idp.inmemory}}\"],\n  \"enhanceScopesWithUserPermissions\": false\n}"
+							"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\"password\"]\n\t}\n  }\n}\n"
 						},
 						"url": {
-							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients/{{client}}",
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
 							"host": [
 								"{{management_url}}"
 							],
@@ -341,8 +346,8 @@
 								"{{defaultEnvironmentId}}",
 								"domains",
 								"{{domain}}",
-								"clients",
-								"{{client}}"
+								"applications",
+								"{{app}}"
 							]
 						}
 					},
@@ -354,7 +359,7 @@
 						{
 							"listen": "test",
 							"script": {
-								"id": "1d7c3e45-ac96-4d78-81d5-29b2b99415ce",
+								"id": "c7bb8f97-693f-49d4-a58f-e3fcc1294fc1",
 								"exec": [
 									"// wait for sync process",
 									"setTimeout(function(){}, 10000);"
@@ -412,7 +417,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "02139c81-405f-499c-aad6-83ff4776c36d",
+										"id": "61584d74-89ff-4b4d-8baa-ea8aa09ed63d",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -452,7 +457,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "1f23bf81-3d4e-4817-95fa-01149b8f532f",
+										"id": "671737af-207a-4f17-bf15-b37bfa94c92d",
 										"exec": [
 											"pm.test(\"Status code is 404\", function () {",
 											"    pm.response.to.have.status(404);",
@@ -494,7 +499,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "4440aa17-269a-4557-8994-943da9cf86ba",
+										"id": "e1e36462-b05c-400d-80cc-51c922613181",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -555,7 +560,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "500b9dc0-7db2-44b7-8101-135cdb935193",
+										"id": "e48ee3e8-7465-4808-bb9a-4c989658e41d",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -598,7 +603,7 @@
 								{
 									"listen": "test",
 									"script": {
-										"id": "2f718a90-446b-4457-a611-921a5488a477",
+										"id": "4f0b69bf-994a-49f5-bead-cea3a3855bff",
 										"exec": [
 											"pm.test(\"Status code is 200\", function () {",
 											"    pm.response.to.have.status(200);",
@@ -658,7 +663,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "90b4d94f-e940-47b7-8cd5-a54bf8f86f8b",
+												"id": "ffbc4963-e29b-4539-8abf-d549b6e72be5",
 												"exec": [
 													"pm.test(\"Status code is 401\", function () {",
 													"    pm.response.to.have.status(401);",
@@ -687,7 +692,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "c992ada0-0af4-4f5e-96a9-95dc15aab438",
+												"id": "a3e1ea0c-ba19-4afd-a83b-bba0e8c5048b",
 												"exec": [
 													"pm.test(\"Status code is 405\", function () {",
 													"    pm.response.to.have.status(405);",
@@ -724,7 +729,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "9b0c72f6-bb9e-4c83-ab23-85f09739262e",
+												"id": "0baa9462-f753-49d0-b86a-2937214b4c8e",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -736,8 +741,6 @@
 													"    pm.expect(body).to.have.property('token_type');",
 													"    pm.expect(body.token_type).to.eql('bearer');",
 													"    pm.expect(body).to.have.property('expires_in');",
-													"    pm.expect(body).to.have.property('scope');",
-													"    pm.expect(body.scope).to.eql('openid');",
 													"    ",
 													"    pm.environment.set('access_token', body.access_token);",
 													"});"
@@ -771,11 +774,6 @@
 													"key": "password",
 													"value": "password",
 													"type": "text"
-												},
-												{
-													"key": "scope",
-													"value": "openid",
-													"type": "text"
 												}
 											]
 										},
@@ -794,7 +792,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "75382754-67d9-4471-a859-1eac6df43dc3",
+												"id": "25caf155-6e07-423c-8a92-7e871caa2335",
 												"exec": [
 													"pm.test(\"Status code is 403\", function () {",
 													"    pm.response.to.have.status(403);",
@@ -847,24 +845,20 @@
 							"name": "Prepare",
 							"item": [
 								{
-									"name": "Enable UMA on RS client",
+									"name": "Enable access to Protection API",
 									"event": [
 										{
 											"listen": "test",
 											"script": {
-												"id": "28e9d46c-a0a5-4907-aacd-8ca8e50e8bd2",
+												"id": "0aeb1ca3-de08-4e7d-baad-a1f451055c64",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
 													"});",
 													"",
-													"pm.test(\"Check scope\", function () {",
-													"    pm.response.to.be.header('Content-Type', 'application/json');",
-													"    var body = pm.response.json();",
-													"    ",
-													"    //Requested uma 2.0 response",
-													"    pm.expect(body).to.have.property(\"scopes\");",
-													"    pm.expect(body.scopes).to.eql([\"uma_protection\"]);",
+													"pm.test(\"Check grant\", function () {",
+													"    let body = JSON.parse(responseBody);",
+													"    pm.expect(body.settings.oauth.scopes).to.eql([\"uma_protection\"]);",
 													"});",
 													"",
 													"// wait for sync process",
@@ -875,7 +869,7 @@
 										}
 									],
 									"request": {
-										"method": "PATCH",
+										"method": "PUT",
 										"header": [
 											{
 												"key": "Content-Type",
@@ -888,10 +882,10 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"scopes\": [\"uma_protection\"]\n}"
+											"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"scopes\": [\"uma_protection\"]\n\t}\n  }\n}\n"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients/{{client}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
 											"host": [
 												"{{management_url}}"
 											],
@@ -903,8 +897,8 @@
 												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
-												"clients",
-												"{{client}}"
+												"applications",
+												"{{app}}"
 											]
 										}
 									},
@@ -916,7 +910,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "26729be8-a4a5-4e78-af95-01b8a09cda71",
+												"id": "fe08a6bb-6ec8-4c94-979b-c5bb47ce9929",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -989,20 +983,6 @@
 							"item": [
 								{
 									"name": "List",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "920855e6-cdea-4b8a-9b6a-52c933557296",
-												"exec": [
-													"pm.test(\"Status code is 204\", function () {",
-													"    pm.response.to.have.status(204);",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
 									"protocolProfileBehavior": {
 										"disabledSystemHeaders": {
 											"host": true,
@@ -1036,7 +1016,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "b0ce812b-c360-45db-a215-0f3d54a2cf6a",
+												"id": "bb85f714-78c3-429b-b9c5-021f1da9d08f",
 												"exec": [
 													"pm.test(\"Status code is 201\", function () {",
 													"    pm.response.to.have.status(201);",
@@ -1101,7 +1081,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "d78a8e9b-57e9-4280-9892-90682b45bdce",
+												"id": "29e76a94-d354-40d6-94b0-59d20efa4048",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -1149,7 +1129,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "61daff5c-6b20-488f-89dc-335add3b6dc0",
+												"id": "98012ca9-591f-44f8-bfd9-d6a068fc026f",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -1209,7 +1189,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "ac978b7f-8f1c-4020-b0bd-fc0dbeec75a4",
+												"id": "a047e4e2-4fcd-42d8-a8a0-0d81f6d1a2dc",
 												"exec": [
 													"pm.test(\"Status code is 200\", function () {",
 													"    pm.response.to.have.status(200);",
@@ -1217,6 +1197,8 @@
 													"",
 													"pm.test(\"Has an access_token\", function () {",
 													"    var body = pm.response.json();",
+													"    console.log(body[0]);",
+													"    console.log(pm.environment.get('resource_id'));",
 													"    pm.expect(body[0]).to.eql(pm.environment.get('resource_id'));",
 													"});"
 												],
@@ -1257,7 +1239,7 @@
 										{
 											"listen": "test",
 											"script": {
-												"id": "c5fd6b7e-bf92-4a27-9c87-a36b58a73601",
+												"id": "3e7c8b28-2747-4ddb-95ac-accf346a68bd",
 												"exec": [
 													"pm.test(\"Status code is 204\", function () {",
 													"    pm.response.to.have.status(204);",
@@ -1311,7 +1293,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "38c34af7-f97d-4a1f-9297-28b9894b9256",
+						"id": "e513ea67-b76c-4ae1-883d-c242168efe2c",
 						"exec": [
 							"pm.test(\"Status code is 204\", function () {",
 							"    pm.response.to.have.status(204);",
@@ -1354,6 +1336,28 @@
 				}
 			},
 			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "01856089-4ef6-4d07-92f2-2d95cfee7e12",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "62a0302c-2520-4b85-b557-a93ee1b9c77d",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		}
 	],
 	"protocolProfileBehavior": {}

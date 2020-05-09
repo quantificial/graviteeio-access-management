@@ -92,8 +92,7 @@ public class UMAProvider extends AbstractService<ProtocolProvider> implements Pr
         final Router umaRouter = Router.router(vertx);
 
         // UMA Provider configuration information endpoint
-        Handler<RoutingContext> umaProviderConfigurationEndpoint = new ProviderConfigurationEndpoint();
-        ((ProviderConfigurationEndpoint) umaProviderConfigurationEndpoint).setDiscoveryService(discoveryService);
+        Handler<RoutingContext> umaProviderConfigurationEndpoint = new ProviderConfigurationEndpoint(discoveryService);
         umaRouter.route(WELL_KNOWN_PATH).handler(corsHandler);
         umaRouter
                 .get(WELL_KNOWN_PATH)

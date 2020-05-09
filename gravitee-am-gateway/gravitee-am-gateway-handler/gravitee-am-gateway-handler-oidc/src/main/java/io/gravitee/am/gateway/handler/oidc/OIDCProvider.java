@@ -121,6 +121,7 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
         // Start OpenID Connect provider
         startOpenIDConnectProtocol();
 
+        // Start UMA 2.0 protocol (after Oauth2 & OIDC)
         startUMAProtocol();
     }
 

@@ -28,10 +28,6 @@ public class ResourceSetRegistrationForbiddenException extends OAuth2Exception {
         super("Not allowed to access to this resource.");
     }
 
-    public ResourceSetRegistrationForbiddenException(String message) {
-        super(message);
-    }
-
     @Override
     public String getOAuth2ErrorCode() {
         return "registration_forbidden";

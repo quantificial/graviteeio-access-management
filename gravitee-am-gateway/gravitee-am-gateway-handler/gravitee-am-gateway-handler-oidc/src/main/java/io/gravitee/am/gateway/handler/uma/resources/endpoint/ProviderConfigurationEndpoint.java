@@ -18,12 +18,11 @@ package io.gravitee.am.gateway.handler.uma.resources.endpoint;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.uma.service.discovery.UMADiscoveryService;
 import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -31,8 +30,11 @@ import org.slf4j.LoggerFactory;
  */
 public class ProviderConfigurationEndpoint implements Handler<RoutingContext> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProviderConfigurationEndpoint.class);
     private UMADiscoveryService discoveryService;
+
+    public ProviderConfigurationEndpoint(UMADiscoveryService umaDiscoveryService) {
+        this.discoveryService = umaDiscoveryService;
+    }
 
     @Override
     public void handle(RoutingContext context) {
@@ -42,15 +44,7 @@ public class ProviderConfigurationEndpoint implements Handler<RoutingContext> {
                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                 .putHeader(HttpHeaders.PRAGMA, "no-cache")
                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                .setStatusCode(HttpStatusCode.OK_200)
                 .end(Json.encodePrettily(discoveryService.getConfiguration(basePath)));
-    }
-
-    public UMADiscoveryService getDiscoveryService() {
-        return discoveryService;
-    }
-
-    public ProviderConfigurationEndpoint setDiscoveryService(UMADiscoveryService discoveryService) {
-        this.discoveryService = discoveryService;
-        return this;
     }
 }
