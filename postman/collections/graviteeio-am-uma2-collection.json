@@ -1,0 +1,1439 @@
+{
+	"info": {
+		"_postman_id": "f6ff2f6b-5bec-45ee-ad5d-545da7901e42",
+		"name": "Gravitee.io - AM - UMA 2.0",
+		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Prepare",
+			"item": [
+				{
+					"name": "Generate admin token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "b2a9c7e2-6cff-480b-bd16-49e29006fd8c",
+								"exec": [
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var token = JSON.parse(responseBody);",
+									"pm.environment.set('token', token.access_token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic YWRtaW46YWRtaW5hZG1pbg=="
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "adminadmin",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{management_url}}/management/auth/token",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create uma 2.0  domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0de551b9-a94c-4f36-bb20-aaaf10e2b5e1",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set('domain', jsonData.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"uma_2\", \n\t\"description\": \"test user-managed access specifications\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete default identity provider",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "32d5fd30-bad9-4e21-ac0b-f52f4ec06c51",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/identities/default-idp-{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"identities",
+								"default-idp-{{domain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create in-memory IDP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "ae574dad-2430-438e-b7fc-c212f13b53a1",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var body = JSON.parse(responseBody);",
+									"pm.environment.set('idp.inmemory', body.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"password\\\"},{\\\"firstname\\\":\\\"Jensen\\\",\\\"lastname\\\":\\\"Barbara\\\",\\\"username\\\":\\\"jensen.barbara\\\",\\\"email\\\":\\\"jensen.barbara@mail.com\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/identities",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"identities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create client 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "2ce4ddc3-f798-41b9-a4da-232379a2b198",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"clientId\": \"RS-client\",\n  \"clientSecret\": \"my-client-secret\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"clients"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Configure client 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "df616b39-d4ed-40ea-b27f-147bff5de9c8",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Saving credentials\", function () {",
+									"    let body = JSON.parse(responseBody);",
+									"    let client_id = body.clientId;",
+									"    let secret = body.clientSecret;",
+									"    let rs_client_secret = btoa(client_id + \":\" + secret);  ",
+									"    pm.environment.set('rs_client_secret', rs_client_secret);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"redirectUris\": [],\n  \"authorizedGrantTypes\": [\"password\"],\n  \"scopes\": [\"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"enabled\": true,\n  \"identities\": [\"{{idp.inmemory}}\"],\n  \"enhanceScopesWithUserPermissions\": false\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients/{{client1}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"clients",
+								"{{client1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create client 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1fb7d2a5-a9ee-4695-8812-fc5e4ce76f96",
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var body = JSON.parse(responseBody);",
+									"pm.environment.set('client2', body.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"clientId\": \"my-client2\",\n  \"clientSecret\": \"my-client-secret2\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"clients"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Configure client 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "8fe7db26-5303-4893-9519-fcb71b7061cd",
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"redirectUris\": [],\n  \"authorizedGrantTypes\": [\"password\"],\n  \"scopes\": [\"openid\"],\n  \"accessTokenValiditySeconds\": 7200,\n  \"refreshTokenValiditySeconds\": 14400,\n  \"idTokenValiditySeconds\": 14400,\n  \"enabled\": true,\n  \"identities\": [\"{{idp.inmemory}}\"],\n  \"enhanceScopesWithUserPermissions\": false\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients/{{client2}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"clients",
+								"{{client2}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "1d7c3e45-ac96-4d78-81d5-29b2b99415ce",
+								"exec": [
+									"// wait for sync process",
+									"setTimeout(function(){}, 10000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"enabled\": true\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "UMA_2.0",
+			"item": [
+				{
+					"name": "Case - non UMA domain",
+					"item": [
+						{
+							"name": "Gravitee AM .well-known",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "02139c81-405f-499c-aad6-83ff4776c36d",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check discovery endpoints\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    ",
+											"    pm.expect(body).to.have.property(\"openid-configuration\");",
+											"    pm.expect(body).to.not.have.property(\"uma2-configuration\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gateway_url}}/{{domain}}/.well-known",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domain}}",
+										".well-known"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Gravitee UMA .well-known disabled",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "1f23bf81-3d4e-4817-95fa-01149b8f532f",
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gateway_url}}/{{domain}}/uma/.well-known/uma2-configuration",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domain}}",
+										"uma",
+										".well-known",
+										"uma2-configuration"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"protocolProfileBehavior": {},
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Enable UMA 2.0",
+					"item": [
+						{
+							"name": "Enable UMA",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "4440aa17-269a-4557-8994-943da9cf86ba",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"UMA enabled for domain\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.uma.enabled).to.eql(true);",
+											"});",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 25000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"uma\": {\n    \"enabled\": true\n  }\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Gravitee AM .well-known",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "500b9dc0-7db2-44b7-8101-135cdb935193",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check uma is enabled\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    let body = pm.response.json();",
+											"    let expected_endpoint = pm.environment.get('gateway_url') + \"/\" + pm.environment.get('domain') + \"/uma/.well-known/uma2-configuration\";",
+											"",
+											"    pm.expect(body).to.have.property(\"openid-configuration\");",
+											"    pm.expect(body).to.have.property(\"uma2-configuration\");",
+											"",
+											"    pm.expect(body['uma2-configuration']).to.eql(expected_endpoint);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gateway_url}}/{{domain}}/.well-known",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domain}}",
+										".well-known"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Gravitee UMA .well-known enabled",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"id": "2f718a90-446b-4457-a611-921a5488a477",
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Check uma 2.0 discovery endpoint\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    ",
+											"    //Specific uma 2.0 endpoints",
+											"    pm.expect(body).to.have.property(\"resource_registration_endpoint\");",
+											"    pm.expect(body).to.have.property(\"permission_endpoint\");",
+											"    pm.expect(body).to.have.property(\"uma_profiles_supported\");",
+											"    pm.expect(body).to.have.property(\"claims_interaction_endpoint\");",
+											"    pm.environment.set('resource_registration_endpoint', body.resource_registration_endpoint);",
+											"    ",
+											"    //Oauth 2.0 endpoints",
+											"    pm.expect(body).to.have.property(\"token_endpoint\");",
+											"    pm.environment.set('tokenEndpoint', body.token_endpoint);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{gateway_url}}/{{domain}}/uma/.well-known/uma2-configuration",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domain}}",
+										"uma",
+										".well-known",
+										"uma2-configuration"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"protocolProfileBehavior": {},
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Protection API - Invalid cases",
+					"item": [
+						{
+							"name": "Resource Registration",
+							"item": [
+								{
+									"name": "Not Authenticated",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "90b4d94f-e940-47b7-8cd5-a54bf8f86f8b",
+												"exec": [
+													"pm.test(\"Status code is 401\", function () {",
+													"    pm.response.to.have.status(401);",
+													"});",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{resource_registration_endpoint}}",
+											"host": [
+												"{{resource_registration_endpoint}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Not Supported method",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "c992ada0-0af4-4f5e-96a9-95dc15aab438",
+												"exec": [
+													"pm.test(\"Status code is 405\", function () {",
+													"    pm.response.to.have.status(405);",
+													"});",
+													"",
+													"pm.test(\"Check 405 response\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    ",
+													"    //Requested uma 2.0 response",
+													"    pm.expect(body).to.have.property(\"error\");",
+													"    pm.expect(body.error).to.eql(\"unsupported_method_type\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{resource_registration_endpoint}}",
+											"host": [
+												"{{resource_registration_endpoint}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Login without - Not PAT",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "9b0c72f6-bb9e-4c83-ab23-85f09739262e",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has an access_token\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('access_token');",
+													"    pm.expect(body).to.have.property('token_type');",
+													"    pm.expect(body.token_type).to.eql('bearer');",
+													"    pm.expect(body).to.have.property('expires_in');",
+													"    pm.expect(body).to.have.property('scope');",
+													"    pm.expect(body.scope).to.eql('openid');",
+													"    ",
+													"    pm.environment.set('access_token', body.access_token);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Basic {{rs_client_secret}}"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "password",
+													"type": "text"
+												},
+												{
+													"key": "username",
+													"value": "user",
+													"type": "text"
+												},
+												{
+													"key": "password",
+													"value": "password",
+													"type": "text"
+												},
+												{
+													"key": "scope",
+													"value": "openid",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{tokenEndpoint}}",
+											"host": [
+												"{{tokenEndpoint}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Missing scope",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "75382754-67d9-4471-a859-1eac6df43dc3",
+												"exec": [
+													"pm.test(\"Status code is 403\", function () {",
+													"    pm.response.to.have.status(403);",
+													"});",
+													"",
+													"pm.test(\"Check 405 response\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    ",
+													"    //Requested uma 2.0 response",
+													"    pm.expect(body).to.have.property(\"error\");",
+													"    pm.expect(body.error).to.eql(\"insufficient_scope\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{resource_registration_endpoint}}",
+											"host": [
+												"{{resource_registration_endpoint}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"protocolProfileBehavior": {},
+							"_postman_isSubFolder": true
+						}
+					],
+					"description": "Case when user bearer called Protected Access Token (PAT) does not contains uma_protected scope.",
+					"protocolProfileBehavior": {},
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "Protection API - nominal case",
+					"item": [
+						{
+							"name": "Prepare",
+							"item": [
+								{
+									"name": "Enable UMA on RS client",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "28e9d46c-a0a5-4907-aacd-8ca8e50e8bd2",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Check scope\", function () {",
+													"    pm.response.to.be.header('Content-Type', 'application/json');",
+													"    var body = pm.response.json();",
+													"    ",
+													"    //Requested uma 2.0 response",
+													"    pm.expect(body).to.have.property(\"scopes\");",
+													"    pm.expect(body.scopes).to.eql([\"uma_protection\"]);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"scopes\": [\"uma_protection\"]\n}"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients/{{client1}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}",
+												"clients",
+												"{{client1}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Login - PAT bearer",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "26729be8-a4a5-4e78-af95-01b8a09cda71",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has an access_token\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('access_token');",
+													"    pm.expect(body).to.have.property('token_type');",
+													"    pm.expect(body.token_type).to.eql('bearer');",
+													"    pm.expect(body).to.have.property('expires_in');",
+													"    pm.expect(body).to.have.property('scope');",
+													"    pm.expect(body.scope).to.eql('uma_protection');",
+													"    ",
+													"    pm.environment.set('access_token', body.access_token);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Basic {{rs_client_secret}}"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "grant_type",
+													"value": "password",
+													"type": "text"
+												},
+												{
+													"key": "username",
+													"value": "user",
+													"type": "text"
+												},
+												{
+													"key": "password",
+													"value": "password",
+													"type": "text"
+												},
+												{
+													"key": "scope",
+													"value": "uma_protection",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{tokenEndpoint}}",
+											"host": [
+												"{{tokenEndpoint}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"protocolProfileBehavior": {},
+							"_postman_isSubFolder": true
+						},
+						{
+							"name": "Resource Registration",
+							"item": [
+								{
+									"name": "List",
+									"protocolProfileBehavior": {
+										"disabledSystemHeaders": {
+											"host": true,
+											"user-agent": true
+										}
+									},
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{resource_registration_endpoint}}",
+											"host": [
+												"{{resource_registration_endpoint}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "b0ce812b-c360-45db-a215-0f3d54a2cf6a",
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"pm.test(\"Has an access_token\", function () {",
+													"    pm.response.to.have.header(\"Content-Type\");",
+													"    pm.response.to.have.header('Location');",
+													"    pm.environment.set('resource_location', pm.response.headers.get('Location'));",
+													"    ",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('_id');",
+													"    pm.expect(body).to.have.property('resource_scopes');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disabledSystemHeaders": {
+											"user-agent": true
+										}
+									},
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{  \n   \"resource_scopes\":[  \n      \"read-public\",\n      \"post-updates\",\n      \"read-private\",\n      \"http://www.example.com/scopes/all\"\n   ],\n   \"description\":\"Collection of digital photographs\",\n   \"icon_uri\":\"http://www.example.com/icons/sharesocial.png\",\n   \"name\":\"Tweedl Social Service\",\n   \"type\":\"http://www.example.com/rsrcs/socialstream/140-compatible\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{resource_registration_endpoint}}",
+											"host": [
+												"{{resource_registration_endpoint}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "d78a8e9b-57e9-4280-9892-90682b45bdce",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has an access_token\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('_id');",
+													"    pm.expect(body).to.have.property('resource_scopes');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disabledSystemHeaders": {
+											"user-agent": true
+										}
+									},
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"url": {
+											"raw": "{{resource_location}}",
+											"host": [
+												"{{resource_location}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "61daff5c-6b20-488f-89dc-335add3b6dc0",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has an access_token\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body).to.have.property('_id');",
+													"    pm.expect(body).to.have.property('resource_scopes');",
+													"    pm.expect(body).to.have.property('name');",
+													"    ",
+													"    pm.expect(body.name).to.eql('updated');",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disabledSystemHeaders": {
+											"user-agent": true
+										}
+									},
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{  \n   \"resource_scopes\":[  \n      \"read-public\",\n      \"post-updates\",\n      \"read-private\",\n      \"http://www.example.com/scopes/all\"\n   ],\n   \"description\":\"Collection of digital photographs\",\n   \"icon_uri\":\"http://www.example.com/icons/sharesocial.png\",\n   \"name\":\"updated\",\n   \"type\":\"http://www.example.com/rsrcs/socialstream/140-compatible\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{resource_location}}",
+											"host": [
+												"{{resource_location}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "List",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "ac978b7f-8f1c-4020-b0bd-fc0dbeec75a4",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has an access_token\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body[0]).to.eql(pm.environment.get('resource_id'));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disabledSystemHeaders": {
+											"host": true,
+											"user-agent": true
+										}
+									},
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"url": {
+											"raw": "{{resource_registration_endpoint}}",
+											"host": [
+												"{{resource_registration_endpoint}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"id": "c5fd6b7e-bf92-4a27-9c87-a36b58a73601",
+												"exec": [
+													"pm.test(\"Status code is 204\", function () {",
+													"    pm.response.to.have.status(204);",
+													"});",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disabledSystemHeaders": {
+											"user-agent": true
+										}
+									},
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer {{access_token}}"
+											}
+										],
+										"url": {
+											"raw": "{{resource_location}}",
+											"host": [
+												"{{resource_location}}"
+											]
+										}
+									},
+									"response": []
+								}
+							],
+							"protocolProfileBehavior": {},
+							"_postman_isSubFolder": true
+						}
+					],
+					"protocolProfileBehavior": {},
+					"_postman_isSubFolder": true
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Delete domain",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "38c34af7-f97d-4a1f-9297-28b9894b9256",
+						"exec": [
+							"pm.test(\"Status code is 204\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+					"host": [
+						"{{management_url}}"
+					],
+					"path": [
+						"management",
+						"organizations",
+						"{{defaultOrganizationId}}",
+						"environments",
+						"{{defaultEnvironmentId}}",
+						"domains",
+						"{{domain}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

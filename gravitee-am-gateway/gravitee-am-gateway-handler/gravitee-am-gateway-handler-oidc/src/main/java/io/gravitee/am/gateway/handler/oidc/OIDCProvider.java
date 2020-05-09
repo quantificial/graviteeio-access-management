@@ -34,6 +34,7 @@ import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientRegist
 import io.gravitee.am.gateway.handler.oidc.resources.handler.DynamicClientRegistrationTemplateHandler;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.uma.UMAProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
@@ -119,6 +120,8 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
 
         // Start OpenID Connect provider
         startOpenIDConnectProtocol();
+
+        startUMAProtocol();
     }
 
     @Override
@@ -137,6 +140,11 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
     private void startOAuth2Protocol() throws Exception {
         OAuth2Provider oAuth2Provider = applicationContext.getBean(OAuth2Provider.class);
         oAuth2Provider.start();
+    }
+
+    private void startUMAProtocol() throws Exception {
+        UMAProvider umaProvider = applicationContext.getBean(UMAProvider.class);
+        umaProvider.start();
     }
 
     private void startOpenIDConnectProtocol() {
